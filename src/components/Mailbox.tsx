@@ -21,14 +21,12 @@ interface MailboxProps {
   feedbacks: CoachFeedback[];
   onMarkAsRead: (id: string) => void;
   onToggleSave: (id: string) => void;
-  nickname: string;
 }
 
 export const Mailbox: React.FC<MailboxProps> = ({
   feedbacks,
   onMarkAsRead,
   onToggleSave,
-  nickname,
 }) => {
   const [selectedFeedback, setSelectedFeedback] = useState<CoachFeedback | null>(null);
   const [filter, setFilter] = useState<"all" | "unread" | "saved">("all");

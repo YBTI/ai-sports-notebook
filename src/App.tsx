@@ -292,7 +292,7 @@ export const App: React.FC = () => {
   };
 
   // 生徒からリアルコーチへのノート提出
-  const handleSubmitNotebook = async (log: DailyLog, textForChat: string) => {
+  const handleSubmitNotebook = async (log: DailyLog) => {
     const studentId = currentUser ? currentUser.id : "std-1";
     const studentName = settings.nickname || (currentUser ? currentUser.name : "生徒");
 
@@ -404,7 +404,6 @@ export const App: React.FC = () => {
                 feedbacks={feedbacks}
                 onMarkAsRead={handleMarkAsRead}
                 onToggleSave={handleToggleSave}
-                nickname={settings.nickname}
               />
             )}
 

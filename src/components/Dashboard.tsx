@@ -18,7 +18,7 @@ export interface DailyLog {
 interface DashboardProps {
   goals: WeeklyGoals;
   onUpdateGoals: (newGoals: WeeklyGoals) => void;
-  onSubmitNotebook: (log: DailyLog, textForChat: string) => void;
+  onSubmitNotebook: (log: DailyLog) => void;
   nickname: string;
 }
 
@@ -56,22 +56,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
       return;
     }
 
-// リアルのコーチ（管理者）に提出するための整形テキスト
-    const chatText = `📖 【今日のスポーツノート提出】 📖
-    
-[勉強の活動]
-・メニュー: ${studyActivity || "お休み"}
-・達成度: ${studyActivity ? `${studyAchievement}%` : "-"}
-
-[スポーツの活動]
-・メニュー: ${sportsActivity || "お休み"}
-・達成度: ${sportsActivity ? `${sportsAchievement}%` : "-"}
-
-[今日の振り返り]
-${reflection || "特になし"}
-
-※リアルのコーチ（管理者）宛てにノートを提出しました。フィードバックはメールボックスに届きます。`;
-
     const log: DailyLog = {
       studyActivity,
       sportsActivity,
@@ -81,7 +65,7 @@ ${reflection || "特になし"}
     };
 
     // ノートの提出処理（親コンポーネントでメッセージの追加とAIの応答起動を行う）
-    onSubmitNotebook(log, chatText);
+    onSubmitNotebook(log);
 
     // フォームをクリア
     setStudyActivity("");
