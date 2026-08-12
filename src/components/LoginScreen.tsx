@@ -16,7 +16,7 @@ interface LoginScreenProps {
   onLoginCoach: (account: UserAccount) => void;
 }
 
-const API_BASE = "http://localhost:3001";
+const API_BASE = "";
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({
   onLoginStudent,
