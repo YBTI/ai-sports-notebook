@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>キソレンモバイル - 機能・仕様説明書</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap');
+    
+    @page {
+      size: A4;
+      margin: 15mm;
+    }
+    
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      color: #0f172a;
+      background: #f8fafc;
+      line-height: 1.6;
+      margin: 0;
+      padding: 30px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      border: 1px solid #e2e8f0;
+    }
+
+    .header-banner {
+      background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #ff6b4a 100%);
+      color: #ffffff;
+      padding: 24px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+    }
+
+    .header-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-subtitle {
+      font-size: 0.95rem;
+      opacity: 0.95;
+      margin-top: 6px;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #0f172a;
+      border-bottom: 2.5px solid #0284c7;
+      padding-bottom: 6px;
+      margin-top: 32px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    p {
+      font-size: 0.9rem;
+      color: #334155;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .badge-student {
+      background: #e0f2fe;
+      color: #0284c7;
+    }
+
+    .badge-coach {
+      background: #0f172a;
+      color: #38bdf8;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 0.85rem;
+    }
+
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 10px 12px;
+      text-align: left;
+    }
+
+    th {
+      background: #f1f5f9;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .feature-card-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    .feature-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .feature-card-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #0f172a;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .demo-account-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 20px;
+    }
+
+    .print-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #0284c7;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 10px rgba(2,132,199,0.3);
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+      .container {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+      }
+      .print-btn {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div style="text-align: right; max-width: 800px; margin: 0 auto;">
+    <button class="print-btn" onclick="window.print()">🖨️ PDFとして保存 / 印刷する</button>
+  </div>
+
+  <div class="container">
+    
+    <div class="header-banner">
+      <h1 class="header-title">🏆 キソレンモバイル (Kisoren Mobile)</h1>
+      <div class="header-subtitle">小中高生のためのスポーツノート（練習記録）＆学習目標達成 指導者伴走アプリ</div>
+    </div>
+
+    <h2>📌 1. コンセプト＆システム特徴</h2>
+    <p>
+      「キソレンモバイル」は、小中高生が毎日の<strong>「スポーツ練習」</strong>と<strong>「勉強ノルマ」</strong>を無理なく楽しく継続できるように設計されたモバイルWebアプリケーションです。<br>
+      モチベーションを高める<b>専属AIコーチ</b>と、実際の指導者が日誌を確認して励ませる<b>リアルコーチ（管理者）</b>のダブルサポート体制を実現します。
+    </p>
+
+    <h2>👥 2. 権限（役割）別の機能一覧</h2>
+
+    <h3>🎓 <span class="badge badge-student">生徒用画面</span> の主な機能</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>タブ</th>
+          <th>機能概要</th>
+          <th>クライアント様へのアピールポイント</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>🏠 ノート</b></td>
+          <td>週間目標管理 / 日々の練習・勉強記録 / 達成度 / リアルコーチへの提出</td>
+          <td>日々の振り返りを言語化し、達成率（%）で成長を可視化。ワンタップでコーチへ提出できます。</td>
+        </tr>
+        <tr>
+          <td><b>💬 AIコーチ</b></td>
+          <td>4タイプの性格から選べるAIパートナーとのLINE風チャット</td>
+          <td>小中高生が読みやすい<b>基本2〜3文の短文回答</b>。熱血・優しさ・分析・タメ口の4性格から選択可能。</td>
+        </tr>
+        <tr>
+          <td><b>📬 メール</b></td>
+          <td>リアルコーチからのフィードバックメール閲覧・記録保存</td>
+          <td>提出したノートに対する本物のコーチからの指導アドバイスが届きます。「★記録保存」でいつでも見返せます。</td>
+        </tr>
+        <tr>
+          <td><b>⚙️ 設定</b></td>
+          <td>プロフィール編集・AIトーン変更・ログアウト</td>
+          <td>学年（小学生・中学生・高校生）に応じたひらがな/漢字の表現調整も自動で行います。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>👨‍🏫 <span class="badge badge-coach">コーチ（管理者）用画面</span> の主な機能</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>タブ</th>
+          <th>機能概要</th>
+          <th>クライアント様へのアピールポイント</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>📋 生徒カルテ</b></td>
+          <td>生徒プロフィールの閲覧 / 週間目標とリアルタイム進捗率バーの確認</td>
+          <td>担当する生徒たちの頑張り度合いを一画面でチェック。目標遅れや伸び悩みを事前に察知できます。</td>
+        </tr>
+        <tr>
+          <td><b>✉️ メール返信</b></td>
+          <td>提出されたスポーツノートの受信・詳細精査・フィードバック作成と送信</td>
+          <td>生徒から届いた日誌（勉強・スポーツの達成度と振り返り）を確認し、温かいアドバイスを送信できます。</td>
+        </tr>
+        <tr>
+          <td><b>💬 AIログ</b></td>
+          <td>生徒とAIコーチの会話ログ監視 / <b>SOS・リスクキーワード自動検出</b></td>
+          <td>「いじめ」「助けて」などのSOS表現や個人情報流出を自動判定。生徒のメンタルと安全を守ります。</td>
+        </tr>
+        <tr>
+          <td><b>⚙️ 設定</b></td>
+          <td>指導者アカウント情報確認・ログアウト</td>
+          <td>複数コーチ（ヘッドコーチ、学習アドバイザー等）による管理が可能です。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>🔑 3. デモ確認用アカウント情報</h2>
+    <div class="demo-account-box">
+      <p style="font-weight: 700; margin-top: 0;">以下のテストアカウントで即座に動作確認できます：</p>
+      <table>
+        <thead>
+          <tr>
+            <th>ログインID</th>
+            <th>パスワード</th>
+            <th>権限</th>
+            <th>アカウント名・設定</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>kouta</code></td>
+            <td><code>1234</code></td>
+            <td>🎓 生徒</td>
+            <td>コウタ（中学生 / 野球・勉学）</td>
+          </tr>
+          <tr>
+            <td><code>kenta</code></td>
+            <td><code>1234</code></td>
+            <td>🎓 生徒</td>
+            <td>けんた（中学生 / 野球部）</td>
+          </tr>
+          <tr>
+            <td><code>haruka</code></td>
+            <td><code>1234</code></td>
+            <td>🎓 生徒</td>
+            <td>はるか（小学生 / 陸上部）</td>
+          </tr>
+          <tr>
+            <td><code>yamada</code></td>
+            <td><code>coach1234</code></td>
+            <td>👨‍🏫 コーチ</td>
+            <td>山田ヘッドコーチ（部活動・生活指導）</td>
+          </tr>
+          <tr>
+            <td><code>sato</code></td>
+            <td><code>coach1234</code></td>
+            <td>👨‍🏫 コーチ</td>
+            <td>佐藤学習アドバイザー（学習・進路）</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>🚀 4. Web公開（デプロイ）手順 (Vercel対応)</h2>
+    <p>GitHubリポジトリ経由で Vercel または Render にワンクリックで公開可能です。</p>
+    <ol>
+      <li><b>GitHubへプッシュ</b>: 本プロジェクトをGitHubのリポジトリにコミット＆プッシュします。</li>
+      <li><b>Vercelにログイン</b>: <a href="https://vercel.com/" target="_blank">Vercel.com</a> にGitHubアカウントでログインします。</li>
+      <li><b>Add New Project</b>: GitHubリポジトリ <code>kisoren-mobile</code> をインポート（Import）します。プロジェクト内に <code>vercel.json</code> を同梱済みのため自動認識されます。</li>
+      <li><b>Environment Variables（環境変数）設定</b>: Vercel設定画面で <code>GEMINI_API_KEY</code> にGoogle APIキー（AQ...）を設定し、<b>Deploy</b> をクリック！</li>
+      <li>数秒で <code>https://kisoren-mobile.vercel.app</code> の公開URLが完成します。</li>
+    </ol>
+
+  </div>
+
+</body>
+</html>
