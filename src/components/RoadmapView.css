@@ -1,0 +1,89 @@
+/* RoadmapView component styling */
+
+.roadmap-container {
+  padding: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+  background: #f9fafb;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+
+.roadmap-title {
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+  color: #111827;
+}
+
+.roadmap-subtitle {
+  color: #475569;
+  margin-bottom: 1.5rem;
+}
+
+.milestone-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.milestone-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.milestone-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.milestone-step {
+  font-weight: 600;
+  color: #64748b;
+}
+
+.milestone-complete-btn {
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+}
+
+.milestone-complete-btn[disabled] {
+  background: #c4b5fd;
+  cursor: default;
+}
+
+.milestone-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.milestone-desc {
+  color: #374151;
+  margin-bottom: 0.4rem;
+}
+
+.milestone-advice {
+  font-size: 0.9rem;
+  color: #111827;
+  background: #e0f2fe;
+  padding: 0.4rem;
+  border-radius: 8px;
+}
+
+.roadmap-refresh {
+  margin-top: 1rem;
+  background: #06b6d4;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}

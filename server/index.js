@@ -1,10 +1,23 @@
+import { fileURLToPath } from 'url';
+import path from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { GoogleGenAI } from "@google/genai";
-
-// .env から環境変数を読み込む
+// Load environment variables first
 dotenv.config();
+import { GoogleGenAI } from "@google/genai";
+import multer from "multer";
+import { createClient } from "@supabase/supabase-js";
+import fs from "fs";
+const uploadDir = path.join(__dirname, '../public/uploads');
+
+// Initialize Supabase client only if both URL and KEY are set
+let supabase = null;
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+  supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+}
 
 const app = express();
 const PORT = process.env.PORT || process.env.VITE_SERVER_PORT || 3001;
@@ -12,119 +25,133 @@ const PORT = process.env.PORT || process.env.VITE_SERVER_PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// Local data persistence via JSON file
+const dataFilePath = path.join(__dirname, '../data.json');
+
+function loadData() {
+  try {
+    const raw = fs.readFileSync(dataFilePath, 'utf-8');
+    return JSON.parse(raw);
+  } catch (e) {
+    // If file does not exist, initialize with empty arrays including accounts
+    const init = { accounts: [], goals: [], milestones: [], feedbacks: [], submittedNotebooks: [] };
+    fs.writeFileSync(dataFilePath, JSON.stringify(init, null, 2));
+    return init;
+  }
+}
+
+function saveData(data) {
+  fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
+}
+
+// Load data at start
+let { accounts, goals, milestones, feedbacks, submittedNotebooks } = loadData();
+
+// Helper to persist after modifications
+function persist() {
+  saveData({ accounts, goals, milestones, feedbacks, submittedNotebooks });
+}
+
+app.use('/uploads', express.static(uploadDir));
+const upload = multer({ dest: uploadDir });
+
+// Simple in‑memory message store for coach comments
+let messages = [];
+// Helper to generate milestones via Gemini
+async function generateMilestones(finalGoal, nearGoal, grade) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error("GEMINI_API_KEY not set");
+    return [];
+  }
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const prompt = `ユーザーの学年:${grade}、最終目標:${finalGoal}、直近目標:${nearGoal}です。4〜6段階のマイルストーンに分解し、各ステップに step_number, title, description, advice を含む JSON 配列で返してください。`;
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(prompt);
+    const text = result.response?.text() ?? "[]";
+    const parsed = JSON.parse(text);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error("Gemini milestone generation error", e);
+    return [];
+  }
+}
+
+
 // ==============================
 // ユーザーアカウント管理（デモ用インメモリストア）
 // ==============================
-const accounts = [
-  {
-    id: "std-1",
-    loginId: "kouta",
-    password: "1234",
-    role: "student",
-    name: "コウタ",
-    grade: "junior_high",
-    sport: "部活動（野球・勉学）",
-    settings: {
-      nickname: "コウタ",
+// Load persisted data arrays (goals, milestones, feedbacks, submittedNotebooks, accounts) are already defined above via loadData().
+// No need to redeclare them here if already present in data.json.
+// However, if empty, we might seed default accounts:
+
+if (accounts.length === 0) {
+  accounts = [
+    {
+      id: "std-1",
+      loginId: "kouta",
+      password: "1234",
+      role: "student",
+      name: "コウタ",
       grade: "junior_high",
-      characterType: "passionate",
-      contactMode: "high_frequency",
+      sport: "部活動（野球・勉学）",
+      settings: {
+        nickname: "コウタ",
+        grade: "junior_high",
+        characterType: "passionate",
+        contactMode: "high_frequency",
+      },
     },
-  },
-  {
-    id: "std-2",
-    loginId: "kenta",
-    password: "1234",
-    role: "student",
-    name: "けんた",
-    grade: "junior_high",
-    sport: "野球部",
-    settings: {
-      nickname: "けんた",
+    {
+      id: "std-2",
+      loginId: "kenta",
+      password: "1234",
+      role: "student",
+      name: "けんた",
       grade: "junior_high",
-      characterType: "friendly",
-      contactMode: "high_frequency",
+      sport: "野球部",
+      settings: {
+        nickname: "けんた",
+        grade: "junior_low",
+        characterType: "friendly",
+        contactMode: "high_frequency",
+      },
     },
-  },
-  {
-    id: "std-3",
-    loginId: "haruka",
-    password: "1234",
-    role: "student",
-    name: "はるか",
-    grade: "elementary",
-    sport: "陸上部",
-    settings: {
-      nickname: "はるか",
+    {
+      id: "std-3",
+      loginId: "haruka",
+      password: "1234",
+      role: "student",
+      name: "はるか",
       grade: "elementary",
-      characterType: "gentle",
-      contactMode: "on_alert",
+      sport: "陸上部",
+      settings: {
+        nickname: "はるか",
+        grade: "elementary",
+        characterType: "gentle",
+        contactMode: "on_alert",
+      },
     },
-  },
-  {
-    id: "coach-1",
-    loginId: "yamada",
-    password: "coach1234",
-    role: "coach",
-    name: "山田ヘッドコーチ",
-    sport: "部活動・生活指導主任",
-  },
-  {
-    id: "coach-2",
-    loginId: "sato",
-    password: "coach1234",
-    role: "coach",
-    name: "佐藤学習アドバイザー",
-    sport: "学習・進路チーフアドバイザー",
-  },
-];
-
-// 生徒から提出されたノート保存（インメモリ）
-const submittedNotebooks = [
-  {
-    id: "nb-demo-1",
-    studentId: "std-1",
-    studentName: "コウタ",
-    submittedAt: new Date(Date.now() - 3600000).toISOString(),
-    notebook: {
-      studyActivity: "数学ワークP10〜P15",
-      sportsActivity: "素振り100回、ランニング3km",
-      studyAchievement: 80,
-      sportsAchievement: 90,
-      reflection: "フォームを意識してしっかり振れました！数学も集中できました。",
+    {
+      id: "coach-1",
+      loginId: "yamada",
+      password: "coach1234",
+      role: "coach",
+      name: "山田ヘッドコーチ",
+      sport: "部活動・生活指導主任",
     },
-    feedback: null,
-  },
-  {
-    id: "nb-demo-2",
-    studentId: "std-2",
-    studentName: "けんた",
-    submittedAt: new Date(Date.now() - 7200000).toISOString(),
-    notebook: {
-      studyActivity: "英語単語テスト勉強",
-      sportsActivity: "キャッチボール、ストレッチ",
-      studyAchievement: 70,
-      sportsAchievement: 85,
-      reflection: "肩の調子が良かったです。明日も頑張ります。",
+    {
+      id: "coach-2",
+      loginId: "sato",
+      password: "coach1234",
+      role: "coach",
+      name: "佐藤学習アドバイザー",
+      sport: "学習・進路チーフアドバイザー",
     },
-    feedback: null,
-  },
-];
-
-// メールボックスのフィードバック一覧（インメモリ）
-const feedbacks = [
-  {
-    id: "fb-welcome-1",
-    studentId: "std-1",
-    date: new Date().toLocaleDateString("ja-JP"),
-    coachName: "山田ヘッドコーチ",
-    coachRole: "部活動・生活指導主任",
-    title: "【歓迎】キソレンモバイルへようこそ！",
-    content: `コウタ選手！キソレンモバイルへの登録ありがとう！\n\nここでの毎日の「スポーツノート」の提出は、わたくし山田コーチをはじめとするリアルな部活コーチ陣がすべて拝見し、一人ひとりにフィードバックをお届けします。\n\n文武両道は大変ですが、小さな毎日の積み重ねが大きな結果を生みます。目標に向けて一緒に頑張りましょう！`,
-    isRead: false,
-    isSaved: true,
-  },
-];
+  ];
+  persist();
+}
 
 // ==============================
 // ログインAPI
@@ -180,32 +207,161 @@ app.post("/api/register", (req, res) => {
   };
 
   accounts.push(newAccount);
+  persist();
 
   const { password: _, ...safeAccount } = newAccount;
   return res.json({ account: safeAccount });
 });
 
+// ------------------------------
+// Goal & Milestone APIs
+// ------------------------------
+
+// Create a new goal and generate milestones
+app.post("/api/goals", async (req, res) => {
+  const { userId, final_goal, near_goal, grade } = req.body;
+  if (!userId || !final_goal || !near_goal) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+  const goalId = `goal-${Date.now()}`;
+  const newGoal = { id: goalId, user_id: userId, final_goal, near_goal, created_at: new Date().toISOString() };
+  goals.unshift(newGoal);
+persist();
+  const genMilestones = await generateMilestones(final_goal, near_goal, grade || "junior_high");
+  const createdMilestones = genMilestones.map((m, idx) => ({
+    id: `ms-${Date.now()}-${idx}`,
+    goal_id: goalId,
+    step_number: m.step_number ?? idx + 1,
+    title: m.title ?? `Step ${idx + 1}`,
+    description: m.description ?? "",
+    advice: m.advice ?? "",
+    is_completed: false,
+    completed_at: null,
+  }));
+  milestones.unshift(...createdMilestones);
+persist();
+});
+
+// Get goal + its milestones for a user
+app.get("/api/goals/:userId", (req, res) => {
+  const { userId } = req.params;
+  const userGoal = goals.find((g) => g.user_id === userId);
+  if (!userGoal) return res.status(404).json({ error: "Goal not found" });
+  const related = milestones.filter((m) => m.goal_id === userGoal.id);
+  return res.json({ goal: userGoal, milestones: related });
+});
+
+// Mark milestone as completed
+app.patch("/api/milestones/:id/complete", (req, res) => {
+  const { id } = req.params;
+  const ms = milestones.find((m) => m.id === id);
+  if (!ms) return res.status(404).json({ error: "Milestone not found" });
+  ms.is_completed = true;
+  ms.completed_at = new Date().toISOString();
+  return res.json({ success: true, milestone: ms });
+});
+
+// Add comment (coach feedback) to milestone
+app.post("/api/milestones/:id/comment", (req, res) => {
+  const { id } = req.params;
+  const { coachName, coachRole, title, content, studentId } = req.body;
+  if (!coachName || !content) return res.status(400).json({ error: "Missing comment fields" });
+  const ms = milestones.find((m) => m.id === id);
+  if (!ms) return res.status(404).json({ error: "Milestone not found" });
+  const feedback = {
+    id: `fb-${Date.now()}`,
+    studentId: studentId || "unknown",
+    milestoneId: id,
+    date: new Date().toLocaleDateString("ja-JP"),
+    coachName,
+    coachRole,
+    title: title || "Coach Comment",
+    content,
+    isRead: false,
+    isSaved: false,
+  };
+  feedbacks.unshift(feedback);
+persist();
+  const msg = { sender: "coach", text: `${title ? title + "\n" : ""}${content}`, timestamp: new Date().toISOString() };
+  messages.push(msg);
+  return res.json({ success: true, feedback });
+});
+
 // ==============================
 // ノート提出API（生徒 → コーチ）
 // ==============================
-app.post("/api/notebooks/submit", (req, res) => {
-  const { studentId, studentName, notebook } = req.body;
+app.post("/api/notebooks/submit", upload.single('image'), async (req, res) => {
+  const { studentId, studentName, note } = req.body;
 
-  if (!studentId || !notebook) {
-    return res.status(400).json({ error: "必須パラメータが不足しています。" });
+  // Validate file presence
+  if (!req.file) {
+    return res.status(400).json({ error: "画像ファイルが必要です。" });
+  }
+
+  // Validate file size (max 5MB)
+  const maxSize = 5 * 1024 * 1024;
+  if (req.file.size > maxSize) {
+    return res.status(400).json({ error: "画像サイズが5MBを超えています。" });
+  }
+
+  // Validate mime type (jpeg or png)
+  const allowedMime = ["image/jpeg", "image/png"];
+  if (!allowedMime.includes(req.file.mimetype)) {
+    return res.status(400).json({ error: "対応フォーマットは JPEG または PNG のみです。" });
+  }
+
+  // Read file buffer
+  const fileBuffer = fs.readFileSync(req.file.path);
+  const fileName = `${Date.now()}_${req.file.originalname}`;
+
+  // Upload to Supabase Storage
+  // Check if Supabase credentials are set
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+  let imageUrl = "";
+
+  if (supabaseUrl && supabaseKey) {
+    const { data, error } = await supabase.storage.from("notebook-images").upload(fileName, fileBuffer, {
+      contentType: req.file.mimetype,
+      upsert: false,
+    });
+    if (error) {
+      console.error("Supabase upload error:", error);
+      // fallback to local storage
+    } else {
+      imageUrl = supabase.storage.from("notebook-images").getPublicUrl(fileName).data.publicUrl;
+    }
+  }
+
+  // If no imageUrl from Supabase, store locally in uploads folder
+  if (!imageUrl) {
+    const localPath = path.join(uploadDir, fileName);
+    fs.renameSync(req.file.path, localPath);
+    imageUrl = `/uploads/${fileName}`; // served statically
+  } else {
+    // Cleanup temp file used for Supabase upload
+    fs.unlinkSync(req.file.path);
+  }
+
+
+  if (!studentId) {
+    return res.status(400).json({ error: "studentId is required" });
   }
 
   const entry = {
     id: `nb-${Date.now()}`,
     studentId,
     studentName: studentName || "不明",
-    notebook,
     submittedAt: new Date().toISOString(),
+    notebook: {
+      image_url: imageUrl,
+      note: note || "",
+    },
     feedback: null,
   };
 
   submittedNotebooks.unshift(entry);
-  return res.json({ success: true, notebookId: entry.id });
+persist();
 });
 
 // ==============================

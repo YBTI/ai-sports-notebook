@@ -296,31 +296,27 @@ export const App: React.FC = () => {
     const studentId = currentUser ? currentUser.id : "std-1";
     const studentName = settings.nickname || (currentUser ? currentUser.name : "生徒");
 
-    // 1. サーバーへ提出API呼出
+    // 1. サーバーへ提出API呼出 (multipart/form-data)
     try {
+      const formData = new FormData();
+      formData.append('studentId', studentId);
+      formData.append('studentName', studentName);
+      if (log.note) {
+        formData.append('note', log.note);
+      }
+      if (log.image) {
+        formData.append('image', log.image);
+      }
       await fetch(`${API_BASE}/api/notebooks/submit`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId,
-          studentName,
-          notebook: log,
-        }),
+        body: formData,
       });
     } catch (e) {
       console.warn("Failed to post notebook to server", e);
     }
 
-    // 2. 達成度ブースト
-    const progressBoost = 10;
-    const nextStudyProgress = log.studyActivity ? Math.min(goals.studyProgress + progressBoost, 100) : goals.studyProgress;
-    const nextSportsProgress = log.sportsActivity ? Math.min(goals.sportsProgress + progressBoost, 100) : goals.sportsProgress;
-
-    const newGoals = {
-      ...goals,
-      studyProgress: nextStudyProgress,
-      sportsProgress: nextSportsProgress,
-    };
+    // ここでは目標の進捗を自動で更新しません。必要に応じて UI で手動調整してください。
+    const newGoals = goals;
     setGoals(newGoals);
     localStorage.setItem(LOCAL_STORAGE_KEYS.GOALS, JSON.stringify(newGoals));
 

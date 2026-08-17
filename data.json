@@ -1,0 +1,69 @@
+{
+  "accounts": [
+    {
+      "id": "std-1",
+      "loginId": "kouta",
+      "password": "1234",
+      "role": "student",
+      "name": "コウタ",
+      "grade": "junior_high",
+      "sport": "部活動（野球・勉学）",
+      "settings": {
+        "nickname": "コウタ",
+        "grade": "junior_high",
+        "characterType": "passionate",
+        "contactMode": "high_frequency"
+      }
+    },
+    {
+      "id": "std-2",
+      "loginId": "kenta",
+      "password": "1234",
+      "role": "student",
+      "name": "けんた",
+      "grade": "junior_high",
+      "sport": "野球部",
+      "settings": {
+        "nickname": "けんた",
+        "grade": "junior_low",
+        "characterType": "friendly",
+        "contactMode": "high_frequency"
+      }
+    },
+    {
+      "id": "std-3",
+      "loginId": "haruka",
+      "password": "1234",
+      "role": "student",
+      "name": "はるか",
+      "grade": "elementary",
+      "sport": "陸上部",
+      "settings": {
+        "nickname": "はるか",
+        "grade": "elementary",
+        "characterType": "gentle",
+        "contactMode": "on_alert"
+      }
+    },
+    {
+      "id": "coach-1",
+      "loginId": "yamada",
+      "password": "coach1234",
+      "role": "coach",
+      "name": "山田ヘッドコーチ",
+      "sport": "部活動・生活指導主任"
+    },
+    {
+      "id": "coach-2",
+      "loginId": "sato",
+      "password": "coach1234",
+      "role": "coach",
+      "name": "佐藤学習アドバイザー",
+      "sport": "学習・進路チーフアドバイザー"
+    }
+  ],
+  "goals": [],
+  "milestones": [],
+  "feedbacks": [],
+  "submittedNotebooks": []
+}
