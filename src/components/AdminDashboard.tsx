@@ -51,11 +51,13 @@ interface SubmittedNotebook {
   studentName: string;
   submittedAt: string;
   notebook: {
-    studyActivity: string;
-    sportsActivity: string;
-    studyAchievement: number;
-    sportsAchievement: number;
-    reflection: string;
+    studyActivity?: string;
+    sportsActivity?: string;
+    studyAchievement?: number;
+    sportsAchievement?: number;
+    reflection?: string;
+    image_url?: string;
+    note?: string;
   };
   feedback?: any;
 }
@@ -71,6 +73,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [notebooks, setNotebooks] = useState<SubmittedNotebook[]>([]);
   const [selectedNotebook, setSelectedNotebook] = useState<SubmittedNotebook | null>(null);
   const [logFilter, setLogFilter] = useState<"all" | "risk">("all");
+  const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+
+  // ロードマップ状態
+  const [studentGoal, setStudentGoal] = useState<{ final_goal: string; near_goal: string } | null>(null);
+  const [studentMilestones, setStudentMilestones] = useState<any[]>([]);
+  const [isLoadingRoadmap, setIsLoadingRoadmap] = useState(false);
 
   // フィードバック入力フォーム
   const [coachName, setCoachName] = useState("山田ヘッドコーチ");
@@ -93,9 +101,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
+  // 生徒のロードマップ情報を取得
+  const fetchStudentRoadmap = async (userId: string) => {
+    setIsLoadingRoadmap(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/goals/${encodeURIComponent(userId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setStudentGoal(data.goal || null);
+        setStudentMilestones(data.milestones || []);
+      } else {
+        // API未登録の場合の初期表示モック
+        setStudentGoal({
+          final_goal: "文武両道で目標達成",
+          near_goal: "毎日ノート提出＆練習の習慣化",
+        });
+        setStudentMilestones([
+          { id: "m1", step_number: 1, title: "基礎習慣の確立", description: "毎日のノート提出とストレッチを行う", advice: "焦らず丁寧に継続しよう！", is_completed: true },
+          { id: "m2", step_number: 2, title: "週間目標80%達成", description: "勉強とスポーツのノルマを達成する", advice: "継続は力なり！", is_completed: false },
+        ]);
+      }
+    } catch (e) {
+      setStudentGoal({
+        final_goal: "文武両道で目標達成",
+        near_goal: "毎日ノート提出＆練習の習慣化",
+      });
+      setStudentMilestones([
+        { id: "m1", step_number: 1, title: "基礎習慣の確立", description: "毎日のノート提出とストレッチを行う", advice: "焦らず丁寧に継続しよう！", is_completed: true },
+        { id: "m2", step_number: 2, title: "週間目標80%達成", description: "勉強とスポーツのノルマを達成する", advice: "継続は力なり！", is_completed: false },
+      ]);
+    } finally {
+      setIsLoadingRoadmap(false);
+    }
+  };
+
   useEffect(() => {
     fetchNotebooks();
   }, [activeTabProp]);
+
+  useEffect(() => {
+    const targetId = selectedNotebook ? selectedNotebook.studentId : (selectedUserId === "current" ? currentSettings.nickname : selectedUserId);
+    if (targetId) {
+      fetchStudentRoadmap(targetId);
+    }
+  }, [selectedUserId, selectedNotebook]);
 
   // デモ用ユーザーリスト
   const currentUserData = {
@@ -339,7 +388,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             {/* スポーツ目標 */}
-            <div style={{ background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "12px", padding: "14px" }}>
+            <div style={{ background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "12px", padding: "14px", marginBottom: "16px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
                 <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "#be123c" }}>🏃 スポーツノルマ</span>
                 <span style={{ fontSize: "0.9rem", fontWeight: "800", color: "#be123c" }}>
@@ -352,6 +401,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div style={{ background: "#ffe4e6", borderRadius: "8px", height: "10px", width: "100%", overflow: "hidden" }}>
                 <div style={{ background: "#e11d48", height: "100%", width: `${activeUser.goals.sportsProgress}%`, transition: "width 0.4s ease" }}></div>
               </div>
+            </div>
+
+            {/* ロードマップ進捗状況 */}
+            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "14px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                <span style={{ fontSize: "0.9rem", fontWeight: "800", color: "#0f172a" }}>🗺️ ロードマップ目標とマイルストーン</span>
+                <button
+                  type="button"
+                  className="btn"
+                  style={{ padding: "3px 8px", fontSize: "0.75rem", background: "#e2e8f0" }}
+                  onClick={() => fetchStudentRoadmap(selectedUserId === "current" ? currentSettings.nickname : selectedUserId)}
+                >
+                  🔄 再読み込み
+                </button>
+              </div>
+
+              {studentGoal ? (
+                <div className="flex-column gap-xs">
+                  <div style={{ background: "#e0f2fe", color: "#0369a1", padding: "8px 12px", borderRadius: "8px", fontSize: "0.85rem", fontWeight: "700" }}>
+                    🎯 最終目標: {studentGoal.final_goal} / 直近: {studentGoal.near_goal}
+                  </div>
+                  {studentMilestones.map((ms, idx) => (
+                    <div key={ms.id || idx} style={{ padding: "8px 10px", background: ms.is_completed ? "#ecfdf5" : "#ffffff", border: ms.is_completed ? "1px solid #a7f3d0" : "1px solid #cbd5e1", borderRadius: "6px", fontSize: "0.8rem" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "700" }}>
+                        <span>Step {ms.step_number || idx + 1}: {ms.title}</span>
+                        <span style={{ color: ms.is_completed ? "#059669" : "#64748b" }}>{ms.is_completed ? "✅ 完了" : "⏳ 進行中"}</span>
+                      </div>
+                      <div style={{ color: "#475569", marginTop: "2px" }}>{ms.description}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: "0.8rem", color: "#94a3b8", fontStyle: "italic" }}>
+                  {isLoadingRoadmap ? "ロードマップ取得中..." : "ロードマップ未設定"}
+                </div>
+              )}
             </div>
 
           </div>
@@ -386,6 +471,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="flex-column gap-xs">
                 {notebooks.map((nb) => {
                   const isSelected = selectedNotebook?.id === nb.id;
+                  const imgUrl = nb.notebook.image_url;
+                  const noteText = nb.notebook.note;
                   return (
                     <div
                       key={nb.id}
@@ -400,7 +487,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       onClick={() => {
                         setSelectedNotebook(nb);
                         setReplyTitle(`【ノート返信】${nb.studentName}選手へコーチからのフィードバック`);
-                        setReplyContent(`${nb.studentName}選手、ノート提出ありがとうございます！\n\n【勉強】${nb.notebook.studyActivity || "なし"} (達成度:${nb.notebook.studyAchievement}%)\n【スポーツ】${nb.notebook.sportsActivity || "なし"} (達成度:${nb.notebook.sportsAchievement}%)\n\nしっかり自分の振り返りができていて素晴らしいです。引き続き目標達成に向けて一緒に頑張っていきましょう！`);
+                        const noteDetail = noteText ? `\n【添え書きコメント】${noteText}` : "";
+                        const imgDetail = imgUrl ? `\n【提出ノート画像】確認済み 📷` : "";
+                        setReplyContent(`${nb.studentName}選手、ノート提出ありがとうございます！${noteDetail}${imgDetail}\n\nしっかり自分の振り返りができていて素晴らしいです。提出されたノート内容を活かして、引き続き目標達成に向けて一緒に頑張っていきましょう！🔥`);
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
@@ -419,14 +508,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </span>
                       </div>
 
-                      <div style={{ fontSize: "0.85rem", color: "#475569", display: "flex", gap: "12px" }}>
-                        <span>📚 勉強: {nb.notebook.studyActivity || "お休み"}</span>
-                        <span>🏃 スポーツ: {nb.notebook.sportsActivity || "お休み"}</span>
-                      </div>
+                      {/* 画像プレビュー */}
+                      {imgUrl && (
+                        <div style={{ marginTop: "6px", marginBottom: "6px" }}>
+                          <img
+                            src={imgUrl.startsWith("http") || imgUrl.startsWith("/") ? imgUrl : `${API_BASE}${imgUrl}`}
+                            alt="提出ノート"
+                            style={{ maxWidth: "160px", maxHeight: "120px", borderRadius: "8px", border: "1px solid #cbd5e1", objectFit: "cover" }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setModalImageUrl(imgUrl.startsWith("http") || imgUrl.startsWith("/") ? imgUrl : `${API_BASE}${imgUrl}`);
+                            }}
+                          />
+                          <span style={{ fontSize: "0.7rem", color: "#0284c7", display: "block", marginTop: "2px" }}>🔍 画像をタップで拡大表示</span>
+                        </div>
+                      )}
 
-                      {nb.notebook.reflection && (
-                        <div style={{ fontSize: "0.8rem", fontStyle: "italic", color: "#64748b", marginTop: "4px" }}>
-                          「{nb.notebook.reflection}」
+                      {/* 添え書きコメント */}
+                      {noteText && (
+                        <div style={{ fontSize: "0.85rem", color: "#334155", background: "#ffffff", padding: "8px 10px", borderRadius: "6px", border: "1px solid #e2e8f0", marginTop: "4px" }}>
+                          📝 <strong>コメント:</strong> {noteText}
+                        </div>
+                      )}
+
+                      {!imgUrl && !noteText && (
+                        <div style={{ fontSize: "0.85rem", color: "#475569", display: "flex", gap: "12px" }}>
+                          <span>📚 勉強: {nb.notebook.studyActivity || "お休み"}</span>
+                          <span>🏃 スポーツ: {nb.notebook.sportsActivity || "お休み"}</span>
                         </div>
                       )}
                     </div>
@@ -631,7 +739,54 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             )}
           </div>
+        </div>
+      )}
 
+      {/* 画像拡大モーダル */}
+      {modalImageUrl && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={() => setModalImageUrl(null)}
+        >
+          <div
+            style={{
+              position: "relative",
+              maxHeight: "90vh",
+              maxWidth: "90vw",
+              background: "#fff",
+              borderRadius: "12px",
+              padding: "16px",
+              boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: "700" }}>📷 提出ノート画像</h4>
+              <button
+                style={{ background: "#ef4444", color: "#fff", border: "none", borderRadius: "50%", width: "28px", height: "28px", cursor: "pointer", fontWeight: "bold" }}
+                onClick={() => setModalImageUrl(null)}
+              >
+                ✕
+              </button>
+            </div>
+            <img
+              src={modalImageUrl}
+              alt="拡大表示"
+              style={{ maxWidth: "100%", maxHeight: "75vh", borderRadius: "8px", objectFit: "contain" }}
+            />
+          </div>
         </div>
       )}
 
