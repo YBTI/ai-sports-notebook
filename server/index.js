@@ -11,7 +11,16 @@ import { GoogleGenAI } from "@google/genai";
 import multer from "multer";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
-const uploadDir = path.join(__dirname, '../public/uploads');
+const uploadDir = process.env.VERCEL ? '/tmp' : path.join(__dirname, '../public/uploads');
+
+// Ensure upload directory exists safely
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (e) {
+  console.warn("Could not create upload directory:", e.message);
+}
 
 // Initialize Supabase client only if both URL and KEY are set
 let supabase = null;
@@ -30,18 +39,24 @@ const dataFilePath = path.join(__dirname, '../data.json');
 
 function loadData() {
   try {
-    const raw = fs.readFileSync(dataFilePath, 'utf-8');
-    return JSON.parse(raw);
+    if (fs.existsSync(dataFilePath)) {
+      const raw = fs.readFileSync(dataFilePath, 'utf-8');
+      return JSON.parse(raw);
+    }
   } catch (e) {
-    // If file does not exist, initialize with empty arrays including accounts
-    const init = { accounts: [], goals: [], milestones: [], feedbacks: [], submittedNotebooks: [] };
-    fs.writeFileSync(dataFilePath, JSON.stringify(init, null, 2));
-    return init;
+    console.warn("Failed to load data.json", e.message);
   }
+  return { accounts: [], goals: [], milestones: [], feedbacks: [], submittedNotebooks: [] };
 }
 
 function saveData(data) {
-  fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
+  try {
+    if (!process.env.VERCEL) {
+      fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
+    }
+  } catch (e) {
+    console.warn("Failed to save data.json", e.message);
+  }
 }
 
 // Load data at start
@@ -64,12 +79,14 @@ async function generateMilestones(finalGoal, nearGoal, grade) {
     console.error("GEMINI_API_KEY not set");
     return [];
   }
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const prompt = `ユーザーの学年:${grade}、最終目標:${finalGoal}、直近目標:${nearGoal}です。4〜6段階のマイルストーンに分解し、各ステップに step_number, title, description, advice を含む JSON 配列で返してください。`;
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const result = await model.generateContent(prompt);
-    const text = result.response?.text() ?? "[]";
+    const genAI = new GoogleGenAI({ apiKey });
+    const prompt = `ユーザーの学年:${grade}、最終目標:${finalGoal}、直近目標:${nearGoal}です。4〜6段階のマイルストーンに分解し、各ステップに step_number, title, description, advice を含む JSON 配列で返してください。`;
+    const response = await genAI.models.generateContent({
+      model: "gemini-3.6-flash",
+      contents: prompt,
+    });
+    const text = response.text ?? "[]";
     const parsed = JSON.parse(text);
     return Array.isArray(parsed) ? parsed : [];
   } catch (e) {
