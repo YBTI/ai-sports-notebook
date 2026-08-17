@@ -60,28 +60,31 @@ export const RoadmapProvider: React.FC<{ userId: string; children: React.ReactNo
           near_goal: '毎日30分ランニング',
           created_at: new Date().toISOString()
         });
-        setMilestones([
-          {
-            id: 'm1',
-            goal_id: 'mock-goal',
-            step_number: 1,
-            title: 'ストレッチ',
-            description: '朝のストレッチを10分行う',
-            advice: '呼吸に意識を向ける',
-            is_completed: false,
-            completed_at: null
-          },
-          {
-            id: 'm2',
-            goal_id: 'mock-goal',
-            step_number: 2,
-            title: 'ジョギング',
-            description: '5kmジョギング',
-            advice: 'ペースはゆっくり',
-            is_completed: false,
-            completed_at: null
-          }
-        ]);
+        setMilestones((prev) => {
+          if (prev && prev.length > 0) return prev;
+          return [
+            {
+              id: 'm1',
+              goal_id: 'mock-goal',
+              step_number: 1,
+              title: 'ストレッチ',
+              description: '朝のストレッチを10分行う',
+              advice: '呼吸に意識を向ける',
+              is_completed: false,
+              completed_at: null
+            },
+            {
+              id: 'm2',
+              goal_id: 'mock-goal',
+              step_number: 2,
+              title: 'ジョギング',
+              description: '5kmジョギング',
+              advice: 'ペースはゆっくり',
+              is_completed: false,
+              completed_at: null
+            }
+          ];
+        });
       }
     } catch (e) {
     console.info('Roadmap data not found, using mock data');
@@ -95,10 +98,23 @@ export const RoadmapProvider: React.FC<{ userId: string; children: React.ReactNo
   const refresh = () => fetchData();
 
   const completeMilestone = async (id: string) => {
-    await fetch(`${API_BASE}/api/milestones/${id}/complete`, {
-      method: 'PATCH',
-    });
-    refresh();
+    // ローカル状態を即時に完了(is_completed: true)へ更新
+    setMilestones((prev) =>
+      prev.map((ms) =>
+        ms.id === id ? { ...ms, is_completed: true, completed_at: new Date().toISOString() } : ms
+      )
+    );
+
+    try {
+      const res = await fetch(`${API_BASE}/api/milestones/${id}/complete`, {
+        method: 'PATCH',
+      });
+      if (res.ok) {
+        refresh();
+      }
+    } catch (e) {
+      console.info('Server complete update skipped, local state updated');
+    }
   };
 
   const addComment = async (id: string, comment: { coachName: string; coachRole: string; title: string; content: string; studentId: string; }) => {
