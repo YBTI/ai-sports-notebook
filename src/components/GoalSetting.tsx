@@ -21,11 +21,7 @@ export const GoalSetting: React.FC<GoalSettingProps> = ({ goals, onUpdateGoals, 
       studyGoal: tempStudyGoal,
       sportsGoal: tempSportsGoal,
     };
-    onUpdateGoals({
-      ...goals,
-      studyGoal: tempStudyGoal,
-      sportsGoal: tempSportsGoal,
-    });
+    onUpdateGoals(newGoalData);
     // Update RoadmapContext with final and near goals (assuming these correspond)
     updateGoal({
       final_goal: tempStudyGoal,
